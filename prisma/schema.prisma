@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id             String          @id @default(cuid())
+  email          String          @unique
+  passwordHash   String
+  name           String
+  role           String          @default("CLIENT")
+  companyName    String?
+  phone          String?
+  website        String?
+  address        String?
+  createdAt      DateTime        @default(now())
+  subscriptions  Subscription[]
+  invoices       Invoice[]
+  tickets        Ticket[]
+  messages       TicketMessage[]
+  passwordResets PasswordReset[]
+}
+
+model Product {
+  id            String         @id @default(cuid())
+  name          String
+  slug          String         @unique
+  icon          String
+  color         String
+  description   String
+  url           String?
+  monthlyPrice  Float
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id          String   @id @default(cuid())
+  userId      String
+  productId   String
+  status      String   @default("ACTIVE")
+  startDate   DateTime @default(now())
+  renewalDate DateTime
+  user        User     @relation(fields: [userId], references: [id])
+  product     Product  @relation(fields: [productId], references: [id])
+}
+
+model Invoice {
+  id          String    @id @default(cuid())
+  userId      String
+  amount      Float
+  status      String    @default("PENDING")
+  description String
+  createdAt   DateTime  @default(now())
+  paidAt      DateTime?
+  user        User      @relation(fields: [userId], references: [id])
+}
+
+model Ticket {
+  id          String          @id @default(cuid())
+  userId      String
+  subject     String
+  description String
+  priority    String          @default("MEDIUM")
+  status      String          @default("OPEN")
+  category    String?
+  createdAt   DateTime        @default(now())
+  user        User            @relation(fields: [userId], references: [id])
+  messages    TicketMessage[]
+}
+
+model TicketMessage {
+  id        String   @id @default(cuid())
+  ticketId  String
+  userId    String
+  message   String
+  isStaff   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  ticket    Ticket   @relation(fields: [ticketId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model PasswordReset {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  user      User     @relation(fields: [userId], references: [id])
+}
